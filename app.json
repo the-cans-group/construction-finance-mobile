@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "jsEngine": "hermes",
+    "newArchEnabled": true,
+    "scheme": "acme",
+    "userInterfaceStyle": "automatic",
+    "orientation": "default",
+    "web": {
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "name": "construction-finance-mobile",
+    "slug": "construction-finance-mobile"
+  }
+}
