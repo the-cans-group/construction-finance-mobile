@@ -8,6 +8,7 @@ import {
     SafeAreaView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {router} from "expo-router";
 
 export default function Dashboard() {
     const { top } = useSafeAreaInsets();
@@ -48,9 +49,11 @@ export default function Dashboard() {
                     <Text className="text-lg font-semibold text-gray-800 mb-2">
                         Quick Actions
                     </Text>
+
                     <View className="flex-row justify-between gap-4">
-                        <ActionButton label="New Project" />
-                        <ActionButton label="View Reports" />
+                        <ActionButton  onPress={() => router.push('/projects')}  label="Project" />
+                        <ActionButton  onPress={() => router.push('/subcontractors')}  label="Sub Contractor" />
+                        <ActionButton  onPress={() => router.push('/projects/new')}  label="View Reports" />
                     </View>
                 </View>
 
@@ -86,9 +89,9 @@ function DashboardCard({ label, value }: { label: string; value: string }) {
 }
 
 
-function ActionButton({ label }: { label: string }) {
+function ActionButton({ label, onPress }: { label: string; onPress?: () => void }) {
     return (
-        <TouchableOpacity className="flex-1 bg-black rounded-xl py-4">
+        <TouchableOpacity onPress={onPress} className="flex-1 bg-black rounded-xl py-4">
             <Text className="text-center text-white font-medium">{label}</Text>
         </TouchableOpacity>
     );

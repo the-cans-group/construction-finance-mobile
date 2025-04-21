@@ -27,6 +27,8 @@ export default function Login() {
     const handleLogin = async () => {
         try {
             setLoading(true);
+            router.replace('/(dashboard)');
+
             const res = await login({ email, password });
 
             if (res.status && res.data?.token) {
