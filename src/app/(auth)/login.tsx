@@ -9,35 +9,98 @@ import {
     Platform,
     ScrollView,
     TouchableWithoutFeedback,
-    Keyboard, Alert,
+    Keyboard,
+    Alert,
+    ActivityIndicator,
 } from 'react-native';
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import {tls} from "node-forge";
-import {useRouter} from "expo-router";
-import { useAuth } from '@/hooks/useAuth';
-import { ActivityIndicator } from 'react-native';
+import {Storage} from "@/libs/storage";
+import { useRouter } from "expo-router";
 
 export default function Login() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const router = useRouter();
+    const [email, setEmail] = useState('john@example.com');
+    const [password, setPassword] = useState('john@example.com');
     const [loading, setLoading] = useState(false);
-    const { login } = useAuth();
+    const router = useRouter();
 
-    const handleLogin = async () => {
+    const handleFakeLogin = async () => {
+        if (!email || !password) {
+            Alert.alert('Error', 'Please fill in both email and password.');
+            return;
+        }
+
         try {
             setLoading(true);
+
+            const token = 'token-1234567890';
+            const userData = {
+                id: 1,
+                name: 'John Doe',
+                email: email,
+            };
+
+            await Storage.setItem('accessUser', {
+                id: 1,
+                name: 'John Doe',
+                email: 'john@example.com',
+            });
+            await Storage.setItem('projects', [
+                {
+                    id: 1,
+                    name: "Finance App UI",
+                    description: "UI design and development for finance tracking application.",
+                    projectType: "Commercial",
+                    startDate: new Date('2024-04-01'),
+                    endDate: new Date('2024-08-30'),
+                    status: "In Progress",
+                    priority: "High",
+                    clientCompany: "FinTech Solutions",
+                    projectManager: "Alice Johnson",
+                    location: "New York, USA",
+                    estimatedBudget: 75000,
+                },
+                {
+                    id: 2,
+                    name: "Tower B Costing",
+                    description: "Cost estimation and financial planning for Tower B project.",
+                    projectType: "Infrastructure",
+                    startDate: new Date('2024-03-15'),
+                    endDate: new Date('2025-01-20'),
+                    status: "Pending Review",
+                    priority: "Critical",
+                    clientCompany: "MegaBuild Corp",
+                    projectManager: "Robert Smith",
+                    location: "Los Angeles, USA",
+                    estimatedBudget: 500000,
+                },
+                {
+                    id: 3,
+                    name: "Bridge Construction",
+                    description: "Steel bridge construction over the Red River.",
+                    projectType: "Infrastructure",
+                    startDate: new Date('2024-05-10'),
+                    endDate: new Date('2025-06-30'),
+                    status: "Completed",
+                    priority: "High",
+                    clientCompany: "City Transport Authority",
+                    projectManager: "Maria Garcia",
+                    location: "Dallas, USA",
+                    estimatedBudget: 1200000,
+                }
+            ]);
+            await Storage.setItem('subcontractors', [
+                { id: 1, name: 'SteelWorks Inc.', specialty: 'Steel Fabrication', contact: 'John Doe' },
+                { id: 2, name: 'Concrete Masters', specialty: 'Concrete Pouring', contact: 'Jane Smith' },
+                { id: 3, name: 'Roofing Pro', specialty: 'Roofing', contact: 'Mike Johnson' },
+            ]);
+
+
+            await Storage.setItem('notifications', [
+                { id: 1, message: "Invoice #1221 approved" },
+                { id: 2, message: "New message from Sarah" },
+                { id: 3, message: "Project deadline updated" },
+            ]);
+
             router.replace('/(dashboard)');
-
-            const res = await login({ email, password });
-
-            if (res.status && res.data?.token) {
-                await AsyncStorage.setItem('accessToken', res.data.token);
-                await AsyncStorage.setItem('accessUser', JSON.stringify(res.data.user));
-                router.replace('/(dashboard)');
-            } else {
-                Alert.alert('Login Failed', res.message || 'Invalid credentials');
-            }
         } catch (error) {
             console.error('Login error:', error);
             Alert.alert('Error', 'Something went wrong. Try again.');
@@ -95,7 +158,7 @@ export default function Login() {
 
                         <TouchableOpacity
                             className="bg-black rounded-xl py-4 items-center justify-center"
-                            onPress={handleLogin}
+                            onPress={handleFakeLogin}
                             disabled={loading}
                         >
                             {loading ? (
@@ -104,7 +167,6 @@ export default function Login() {
                                 <Text className="text-white font-medium text-base">Continue</Text>
                             )}
                         </TouchableOpacity>
-
 
                         <Text className="text-center text-gray-500 mt-6 mb-8">
                             Don’t have an account?{' '}

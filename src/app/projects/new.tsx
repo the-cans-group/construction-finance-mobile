@@ -18,7 +18,7 @@ import Toast from 'react-native-toast-message';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-
+import {Storage} from "@/libs/storage";
 const schema = z.object({
     name: z.string().min(1, 'Project name is required'),
     description: z.string().optional(),
@@ -54,14 +54,25 @@ export default function NewProject() {
 
     const onSubmit = async (data) => {
         try {
-            await axios.post('https://your-api.com/projects', data);
+            const projects = await Storage.getItem('projects') || [];
+
+            const newProject = {
+                id: projects.length + 1,
+                ...data,
+            };
+
+            const updatedProjects = [...projects, newProject];
+
+            await Storage.setItem('projects', updatedProjects);
+
             Toast.show({ type: 'success', text1: 'Success', text2: 'Project created successfully.' });
-            router.replace('/dashboard');
+            router.replace('/(dashboard)');
+
         } catch (err) {
+            console.error('Save Project Error:', err);
             Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to create project.' });
         }
     };
-
     const renderSelect = (label, name, options) => (
         <View className="mb-6">
             <Text className="text-sm font-medium text-gray-700 mb-2">{label}</Text>

@@ -13,38 +13,9 @@ import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
 import { SwipeListView } from 'react-native-swipe-list-view';
+import {Storage} from "@/libs/storage";
 
 const { width } = Dimensions.get('window');
-
-const fakeProjects = [
-    {
-        id: 1,
-        name: 'Office Renovation',
-        description: 'Renovating 3rd floor office',
-        status: 'Planning',
-        projectType: 'Commercial',
-        priority: 'Medium',
-        startDate: new Date(),
-    },
-    {
-        id: 2,
-        name: 'Bridge Construction',
-        description: 'Steel bridge for heavy transport',
-        status: 'In Progress',
-        projectType: 'Infrastructure',
-        priority: 'High',
-        startDate: new Date(),
-    },
-    {
-        id: 3,
-        name: 'Villa Complex',
-        description: '',
-        status: 'Completed',
-        projectType: 'Residential',
-        priority: 'Low',
-        startDate: new Date(),
-    },
-];
 
 const Badge = ({ label, color }) => (
     <View className={`bg-${color}-100 px-2 py-1 rounded-md`}>
@@ -65,7 +36,8 @@ export default function ProjectList() {
 
     const fetchProjects = async () => {
         try {
-            setProjects(fakeProjects);
+            const storedProjects = await Storage.getItem('projects') || [];
+            setProjects(storedProjects);
         } catch (err) {
             console.error('Error fetching projects:', err);
         } finally {
@@ -78,14 +50,22 @@ export default function ProjectList() {
         fetchProjects();
     }, []);
 
-    const handleDelete = (id) => {
-        setProjects((prev) => prev.filter((p) => p.id !== id));
-        Toast.show({
-            type: 'success',
-            text1: 'Deleted',
-            text2: 'Project removed successfully ✅',
-        });
+    const handleDelete = async (id) => {
+        try {
+            const updatedProjects = projects.filter((p) => p.id !== id);
+            setProjects(updatedProjects);
+            await Storage.setItem('projects', updatedProjects);
+
+            Toast.show({
+                type: 'success',
+                text1: 'Deleted',
+                text2: 'Project removed successfully ✅',
+            });
+        } catch (error) {
+            console.error('Delete Project Error:', error);
+        }
     };
+
 
     const filteredProjects = projects.filter((p) =>
         p.name.toLowerCase().includes(search.toLowerCase())

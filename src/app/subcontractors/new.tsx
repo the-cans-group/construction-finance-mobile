@@ -15,6 +15,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
+import { Storage } from '@/libs/storage';
 
 const schema = z.object({
     name: z.string().min(1, 'Subcontractor name is required'),
@@ -37,16 +38,27 @@ export default function AddSubcontractor() {
 
     const onSubmit = async (data: FormData) => {
         try {
-            // Fake API request
-            console.log('New Subcontractor:', data);
+            const subcontractors = await Storage.getItem('subcontractors') || [];
+
+            const newSubcontractor = {
+                id: subcontractors.length > 0 ? subcontractors[subcontractors.length - 1].id + 1 : 1,
+                ...data,
+            };
+
+            const updated = [...subcontractors, newSubcontractor];
+
+            await Storage.setItem('subcontractors', updated);
+
             Toast.show({
                 type: 'success',
                 text1: 'Success',
                 text2: 'Subcontractor added successfully ✅',
             });
+
             reset();
             router.replace('/subcontractors');
         } catch (err) {
+            console.error('Save Subcontractor Error:', err);
             Toast.show({
                 type: 'error',
                 text1: 'Error',

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -6,12 +6,89 @@ import {
     TouchableOpacity,
     Image,
     SafeAreaView,
+    ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {router} from "expo-router";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+import {Storage} from "@/libs/storage";
 export default function Dashboard() {
     const { top } = useSafeAreaInsets();
+    const [user, setUser] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [subcontractors, setSubcontractors] = useState<any[]>([]);
+    const [projects, setProjects] = useState<any[]>([]);
+    const [notifications, setNotifications] = useState<any[]>([]);
+
+    useEffect(() => {
+        fetchData();
+        fetchUser();
+        fetchProjects();
+        fetchNotifications();
+    }, []);
+
+    const fetchData = async () => {
+        try {
+            const projectList = await Storage.getItem('projects') || [];
+            const subcontractorList = await Storage.getItem('subcontractors') || [];
+
+            setProjects(projectList);
+            setSubcontractors(subcontractorList);
+        } catch (error) {
+            console.error('Error fetching dashboard data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const fetchUser = async () => {
+        try {
+            const userData = await Storage.getItem('accessUser');
+            if (userData) {
+                setUser(userData);
+            }
+        } catch (error) {
+            console.error('Failed to fetch user data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const fetchProjects = async () => {
+        try {
+            const storedProjects = await Storage.getItem('projects');
+            if (storedProjects) {
+                setProjects(storedProjects);
+            }
+        } catch (error) {
+            console.error('Failed to fetch projects:', error);
+        }
+    };
+    const fetchNotifications = async () => {
+        try {
+            const storedNotifications = await Storage.getItem('notifications');
+            if (storedNotifications) {
+                setNotifications(storedNotifications);
+            }
+        } catch (error) {
+            console.error('Failed to fetch notifications:', error);
+        }
+    };
+
+    const cards = [
+        { label: 'Balance', value: '$12,540' },
+        { label: 'Projects', value: `${projects.length} Active` },
+        { label: 'Subcontractors', value: `${subcontractors.length} Total` },
+        { label: 'Revenue', value: '$98,210' },
+        { label: 'Expenses', value: '$13,250' },
+        { label: 'Tasks', value: '6 To-Do' },
+    ];
+
+    if (loading) {
+        return (
+            <View className="flex-1 justify-center items-center bg-white">
+                <ActivityIndicator size="large" color="#000" />
+            </View>
+        );
+    }
 
     return (
         <SafeAreaView className="flex-1 bg-white" style={{ paddingTop: top }}>
@@ -20,7 +97,9 @@ export default function Dashboard() {
                 <View className="flex-row items-center justify-between mb-6">
                     <View>
                         <Text className="text-sm text-gray-500">Welcome back</Text>
-                        <Text className="text-2xl font-bold text-gray-900">Uğur CAN 👷‍♂️</Text>
+                        <Text className="text-2xl font-bold text-gray-900">
+                            {user?.name || 'Guest'} 👷‍♂️
+                        </Text>
                     </View>
                     <Image
                         source={require('../../assets/icon.png')}
@@ -28,21 +107,18 @@ export default function Dashboard() {
                     />
                 </View>
 
-                {/* Hızlı Kartlar */}
-                <View className="mb-6">
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{ gap: 12, paddingRight: 12, paddingTop:5, paddingBottom:5  }}
-                    >
-                        <DashboardCard label="Balance" value="$12,540" />
-                        <DashboardCard label="Projects" value="4 Active" />
-                        <DashboardCard label="Alerts" value="2 🔔" />
-                        <DashboardCard label="Revenue" value="$98,210" />
-                        <DashboardCard label="Expenses" value="$13,250" />
-                        <DashboardCard label="Tasks" value="6 To-Do" />
-                    </ScrollView>
-                </View>
+                {/* Hızlı Kartlar */}<View className="mb-6">
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 12, paddingRight: 12, paddingTop: 5, paddingBottom: 5 }}
+                >
+                    {cards.map((card) => (
+                        <DashboardCard key={card.label} label={card.label} value={card.value} />
+                    ))}
+                </ScrollView>
+            </View>
+
 
                 {/* Quick Actions */}
                 <View className="mb-6">
@@ -51,9 +127,9 @@ export default function Dashboard() {
                     </Text>
 
                     <View className="flex-row justify-between gap-4">
-                        <ActionButton  onPress={() => router.push('/projects')}  label="Project" />
-                        <ActionButton  onPress={() => router.push('/subcontractors')}  label="Sub Contractor" />
-                        <ActionButton  onPress={() => router.push('/projects/new')}  label="View Reports" />
+                        <ActionButton onPress={() => router.push('/projects')} label="Project" />
+                        <ActionButton onPress={() => router.push('/subcontractors')} label="Sub Contractor" />
+                        <ActionButton onPress={() => router.push('/projects/new')} label="View Reports" />
                     </View>
                 </View>
 
@@ -62,8 +138,20 @@ export default function Dashboard() {
                     <Text className="text-lg font-semibold text-gray-800 mb-3">
                         My Projects
                     </Text>
-                    <ProjectItem name="Finance App UI" status="In Progress" />
-                    <ProjectItem name="Tower B Costing" status="Pending Review" />
+
+                    {projects.length > 0 ? (
+                        projects.map((project: any) => (
+                            <ProjectItem
+                                key={project.id}
+                                name={project.name}
+                                status={project.status}
+                                onPress={() => router.push(`/projects/${project.id}`)}
+                            />
+                        ))
+                    ) : (
+                        <Text className="text-gray-500">No projects available.</Text>
+                    )}
+
                 </View>
 
                 {/* Notifications */}
@@ -71,9 +159,16 @@ export default function Dashboard() {
                     <Text className="text-lg font-semibold text-gray-800 mb-3">
                         Notifications
                     </Text>
-                    <NotificationItem message="Invoice #1221 approved" />
-                    <NotificationItem message="New message from Sarah" />
+
+                    {notifications.length > 0 ? (
+                        notifications.map((n: any) => (
+                            <NotificationItem key={n.id} message={n.message} />
+                        ))
+                    ) : (
+                        <Text className="text-gray-500">No notifications available.</Text>
+                    )}
                 </View>
+
             </ScrollView>
         </SafeAreaView>
     );
@@ -88,7 +183,6 @@ function DashboardCard({ label, value }: { label: string; value: string }) {
     );
 }
 
-
 function ActionButton({ label, onPress }: { label: string; onPress?: () => void }) {
     return (
         <TouchableOpacity onPress={onPress} className="flex-1 bg-black rounded-xl py-4">
@@ -97,14 +191,18 @@ function ActionButton({ label, onPress }: { label: string; onPress?: () => void 
     );
 }
 
-function ProjectItem({ name, status }: { name: string; status: string }) {
+function ProjectItem({ name, status, onPress }: { name: string; status: string; onPress?: () => void }) {
     return (
-        <View className="border border-gray-200 rounded-xl px-4 py-3 mb-2">
+        <TouchableOpacity
+            onPress={onPress}
+            className="border border-gray-200 rounded-xl px-4 py-3 mb-2 bg-white"
+        >
             <Text className="text-gray-900 font-medium">{name}</Text>
             <Text className="text-sm text-gray-500 mt-1">{status}</Text>
-        </View>
+        </TouchableOpacity>
     );
 }
+
 
 function NotificationItem({ message }: { message: string }) {
     return (
