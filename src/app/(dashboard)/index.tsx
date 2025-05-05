@@ -129,7 +129,8 @@ export default function Dashboard() {
                     <View className="flex-row justify-between gap-4">
                         <ActionButton onPress={() => router.push('/projects')} label="Project" />
                         <ActionButton onPress={() => router.push('/subcontractors')} label="Sub Contractor" />
-                        <ActionButton onPress={() => router.push('/projects/new')} label="View Reports" />
+                        <ActionButton onPress={() => router.push('/comes-and-goes')} label="Comes - Goes" />
+                        <ActionButton onPress={() => router.push('/progress-payment')} label="Progress Payment" />
                     </View>
                 </View>
 
